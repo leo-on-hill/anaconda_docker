@@ -15,7 +15,7 @@ CONTAINER_NAME='anaconda'
 CONTAINER_FULL="daocloud.io/lhw1987654/dev-env:$IMAGE_NAME"
 #valume path
 #>>>>>>>>>>>[ Please modify the path below to your path ] <<<<<<
-BASE_PATH='/Users/liu/Downloads'
+BASE_PATH='/pd/tank'
 #http port
 HTTP_PORT='9988'
 #passowrd, DO NOT modify unless you know how to generate it 
@@ -100,7 +100,8 @@ checkDockerImage(){
 # ------------------------------------------------------
 checkDockerContainer(){
 	echo "Info: checking docker container $CONTAINER_NAME ..."
-	CONTAINER=`docker ps --format "table {{.Names}}" | grep "$CONTAINER_NAME"`
+	#CONTAINER=`docker ps --format "table {{.Names}}" | grep "$CONTAINER_NAME"`
+	CONTAINER=`docker ps | grep "$CONTAINER_NAME" | rev | awk '{print $1}' | rev`
 	if [ ! -n "$CONTAINER" ]; then
 		echo "Warning: docker container $CONTAINER_NAME is not found"
 		echo "Info: running docker container and will name the container as $CONTAINER_NAME"
@@ -115,14 +116,15 @@ checkDockerContainer(){
 	  "$ANACODA"
 	fi
 
-	CONTAINER=`docker ps --format "table {{.Names}}" | grep "$CONTAINER_NAME"`
-	if [ ! -n "$CONTAINER" ]; then
+	#CONTAINER=`docker ps --format "table {{.Names}}" | grep "$CONTAINER_NAME"`
+	CONTAINER=`docker ps | grep "$CONTAINER_NAME" | rev | awk '{print $1}' | rev`
+        if [ ! -n "$CONTAINER" ]; then
 		echo "Error: no $CONTAINER_NAME docker container found!"
 		echo "Error: It seems pulling docker container $CONTAINER_NAME failed"
 		exit
 	fi
-	docker exec -it anaconda  jupyter notebook --generate-config --allow-root -y
-	docker exec -it anaconda  bash -c "echo \"c.NotebookApp.password = u'$PASSWORD_HASH'\" >> /root/.jupyter/jupyter_notebook_config.py "
+	docker exec anaconda  jupyter notebook --generate-config --allow-root -y
+	docker exec anaconda  bash -c "echo \"c.NotebookApp.password = u'$PASSWORD_HASH'\" >> /root/.jupyter/jupyter_notebook_config.py "
 	echo "Info: got docker container: $CONTAINER"
 }
 
@@ -147,7 +149,7 @@ removeContainer(){
 # ------------------------------------------------------
 jupyterNotebook(){
 	echo "Info: staring jupyter notebook ..."
-	docker exec -it "$CONTAINER_NAME" \
+	docker exec "$CONTAINER_NAME" \
 		jupyter notebook \
 		--notebook-dir="$TARGET_PATH" \
 		--ip=* \
@@ -166,8 +168,12 @@ checkTargetPath
 checkDockerImage
 checkDockerContainer
 printPassword
-open "http://localhost:$HTTP_PORT/login?next=%2Ftree&password=$PASSWORD"
+URL="http://localhost:$HTTP_PORT/login?next=%2Ftree&password=$PASSWORD"
+echo "Your url: $URL"
+open "$URL"
 jupyterNotebook
+
+
 
 
 
